@@ -29,9 +29,11 @@ Required libraries: pandas, numpy, matplotlib, seaborn, scipy (install with `%pi
 - Metrics: MSE, Concordance Index, Hit@1, Hit@5.
 - Final models: DAVIS item-based k = 10, KIBA user-based k = 10. Reloading the saved models reproduces identical predictions.
 
+## Task 3 summary
+
+
 ## Notes
 - `data/kiba/kiba_drug_sim.zip` must be unzipped locally if needed (file too large for GitHub web upload).
 - `saved_models/kiba_cf.npz` is about 25 MB; upload it through Git (VS Code Sync), not the GitHub website.
 - Random seed 42 is used throughout so results are reproducible.
 
-## Task 3 summary
