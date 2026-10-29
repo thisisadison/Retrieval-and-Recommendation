@@ -34,4 +34,4 @@ Required libraries: pandas, numpy, matplotlib, seaborn, scipy (install with `%pi
 - `saved_models/kiba_cf.npz` is about 25 MB; upload it through Git (VS Code Sync), not the GitHub website.
 - Random seed 42 is used throughout so results are reproducible.
 
-### Task 3 summary
+## Task 3 summary
