@@ -1,7 +1,7 @@
 # SC4020 Project 2: DAVIS and KIBA Drug–Target Binding
 
 ## Folder structure
-- `data/davis/`, `data/kiba/`: original datasets from DeepDTA (Öztürk et al., 2018)
+- `data/davis/`, `data/kiba/`: original datasets from DeepDTA provided in the slides
 - `data/clean/`: cleaned, deduplicated data created by Task 1 (used by Tasks 2 and 3)
 - `figures/`: figures saved by the notebooks for the report
 - `saved_models/`: trained CF models from Task 2 (`davis_cf.npz`, `kiba_cf.npz`)
@@ -15,7 +15,8 @@
 3. Run `task2_cf.ipynb` (Run All). It creates `saved_models/` and more figures.
 4. Run `task3_cold_target.ipynb` (Run All). It saves its figures to `figures/`.
 
-Required libraries: pandas, numpy, matplotlib, seaborn, scipy (install with `%pip install ...` in a notebook cell if missing).
+## Requirements
+Running the first cell of `task1_analysis.ipynb` installs all required libraries (pandas, numpy, matplotlib, seaborn, scipy). Run Task 1 first.
 
 ## Task 1 summary
 - DAVIS scores converted to pKd = 9 − log10(Kd). KIBA scores are used as supplied (higher = stronger for both).
@@ -40,10 +41,10 @@ Required libraries: pandas, numpy, matplotlib, seaborn, scipy (install with `%pi
 - k chosen on cold validation targets (DAVIS k = 5, KIBA k = 3)
 
 - Results vs. the CF fallback on cold test targets: 
-1) DAVIS MSE 0.460 → 0.293
-2) DAVIS Hit@1 0.02 → 0.48
-3) KIBA MSE 0.394 → 0.365
-4) KIBA Hit@1 0.13 → 0.35
+1) DAVIS MSE 0.460 -> 0.293
+2) DAVIS Hit@1 0.02 -> 0.48
+3) KIBA MSE 0.394 -> 0.365
+4) KIBA Hit@1 0.13 -> 0.35
 
 - Limitation: the gain depends on having a similar training target. Targets with no close relative have little to no improvement.
 
