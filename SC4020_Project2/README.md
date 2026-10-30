@@ -45,6 +45,6 @@ Running the first cell of `task1_analysis.ipynb` installs all required libraries
 
 ## Notes
 - `data/kiba/kiba_drug_sim.zip` must be unzipped locally if needed (the file is too large to be uploaded on its own).
-- - `saved_models/kiba_cf.npz` is about 26 MB, which is above the GitHub website's 25 MB upload limit. Commit and sync it from VS Code instead of uploading it on the website.
+- `saved_models/kiba_cf.npz` is about 26 MB, which is above the GitHub website's 25 MB upload limit. Commit and sync it from VS Code instead of uploading it on the website.
 - Random seed 42 is used throughout so that the results are reproducible.
 
