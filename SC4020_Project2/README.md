@@ -34,11 +34,11 @@ Running the first cell of `task1_analysis.ipynb` installs all required libraries
 
 ## Task 3 summary
 - Problem: CF cannot predict for a target with no training scores. It falls back to the ligand mean (mu + b_u), giving every new target the same score.
-- Cold-target split: targets (not pairs) split 70 / 15 / 15 with seed 42
+- Cold-target split: targets (not pairs) split 70 / 15 / 15 with seed 42.
 - Validation and test targets have no training scores.
 - Method: borrow scores from the training targets with the most similar protein sequences, using lecture 11.3 neighbour formula with sequence similarity instead of score similarity.
 - Sequence similarity: Jaccard similarity on sets of 3-letter fragments (3-mers) of each sequence. It uses no binding scores so it works for any new target.
-- k chosen on cold validation targets (DAVIS k = 5, KIBA k = 3)
+- K chosen on cold validation targets (DAVIS k = 5, KIBA k = 3)
 
 - Results vs. the CF fallback on cold test targets: 
 1) DAVIS MSE 0.460 -> 0.293
