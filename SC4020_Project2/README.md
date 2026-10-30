@@ -41,7 +41,6 @@ Running the first cell of `task1_analysis.ipynb` installs all required libraries
 - Results vs. the CF fallback on cold test targets:
   - DAVIS: MSE 0.460 -> 0.293, Hit@1 0.02 -> 0.48
   - KIBA: MSE 0.394 -> 0.365, Hit@1 0.13 -> 0.35
-
 - Limitation: the gain depends on having a similar training target. Targets with no close relative see little to no improvement.
 
 ## Notes
