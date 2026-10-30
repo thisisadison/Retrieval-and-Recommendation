@@ -34,19 +34,14 @@ Running the first cell of `task1_analysis.ipynb` installs all required libraries
 
 ## Task 3 summary
 - Problem: CF cannot predict for a target with no training scores. It falls back to the ligand mean (mu + b_u), giving every new target the same score.
-- Cold-target split: targets (not pairs) split 70 / 15 / 15 with seed 42.
-- Validation and test targets have no training scores.
-- Method: borrow scores from the training targets with the most similar protein sequences, using lecture 11.3 neighbour formula with sequence similarity instead of score similarity.
-- Sequence similarity: Jaccard similarity on sets of 3-letter fragments (3-mers) of each sequence. It uses no binding scores so it works for any new target.
-- K chosen on cold validation targets (DAVIS k = 5, KIBA k = 3)
-
-- Results vs. the CF fallback on cold test targets: 
-1) DAVIS MSE 0.460 -> 0.293
-2) DAVIS Hit@1 0.02 -> 0.48
-3) KIBA MSE 0.394 -> 0.365
-4) KIBA Hit@1 0.13 -> 0.35
-
-- Limitation: the gain depends on having a similar training target. Targets with no close relative have little to no improvement.
+- Cold-target split: targets (not pairs) split 70 / 15 / 15 with seed 42. Validation and test targets have no training scores.
+- Method: borrow scores from the training targets with the most similar protein sequences using the lecture 11.3 neighbour formula with sequence similarity instead of score similarity.
+- Sequence similarity: Jaccard similarity on sets of 3-letter fragments (3-mers) of each sequence. It uses no binding scores, so it works for any new target.
+- k chosen on cold validation targets (DAVIS k = 5, KIBA k = 3).
+- Results vs. the CF fallback on cold test targets:
+  - DAVIS: MSE 0.460 → 0.293, Hit@1 0.02 → 0.48
+  - KIBA: MSE 0.394 → 0.365, Hit@1 0.13 → 0.35
+- Limitation: the gain depends on having a similar training target. Targets with no close relative see little or no improvement.
 
 ## Notes
 - `data/kiba/kiba_drug_sim.zip` must be unzipped locally if needed (the file is too large to be uploaded on its own).
