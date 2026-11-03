@@ -1,83 +1,84 @@
-# SC4020 Project 2: DAVIS and KIBA drug-target binding
+# SC4020 Project 2: DAVIS and KIBA Drug–Target Binding
 
-Three notebooks cover the three tasks: data analysis and cleaning (Task 1),
-collaborative filtering (CF) for recommending targets to a ligand (Task 2), and
-prediction for proteins with no training affinities (Task 3).
+## Folder structure
+- `data/davis/`, `data/kiba/`: original datasets from DeepDTA provided
+- `data/clean/`: cleaned, deduplicated data created by Task 1 (used by Tasks 2 and 3)
+- `figures/`: figures saved by the notebooks for the report
+- `saved_models/`: trained CF models from Task 2 (`davis_cf.npz`, `kiba_cf.npz`) and cold-target models from Task 3 (`davis_cold.npz`, `kiba_cold.npz`)
+- `task1_analysis.ipynb`: Task 1, data loading, cleaning, visualisation and analysis
+- `task2_cf.ipynb`: Task 2, collaborative filtering recommender using lecture 11.3 method
+- `task3_cold_target.ipynb`: Task 3, cold-target generalisation using sequence similarity
+- `project2_data.py`, `project2_metrics.py`, `project2_cf.py`, `project2_cold.py`: shared code used by the notebooks (cleaning, metrics, CF model, cold-target model)
+- `results/cold/`: Task 3 results over three splits (seeds 42, 7, 2026), created by `project2_cold.py`
+- `tests/`: checks for the metrics, CF, cold-target model and cleaning
 
-## Run the project
+## How to run
+1. Open the `SC4020_Project2` folder in VS Code and install the requirements (below).
+2. Run `task1_analysis.ipynb` first (Run All). It creates `data/clean/` and `figures/`.
+3. Run `task2_cf.ipynb` (Run All). It creates `saved_models/` and more figures.
+4. Run `python project2_cold.py` once. It creates `results/cold/` and the Task 3 saved models.
+5. Run `task3_cold_target.ipynb` (Run All). It saves its figures to `figures/`.
 
-Validated with Python 3.13.7. From this folder (PowerShell):
+Optional: `python -m unittest discover -s tests` runs the checks.
+
+## Requirements
+Validated with Python 3.13.7. Install the pinned libraries once before running the notebooks:
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-Then run the notebooks in order in VS Code or Jupyter with that environment:
+## Task 1 summary
+We started by making sure both datasets are in the same shape. DAVIS gives binding as Kd in nM, where lower means stronger. Hence we converted it to pKd = 9 − log10(Kd) to make higher mean stronger, matching KIBA's scale. Some IDs turned out to share the exact same SMILES or protein sequence, so we merged those pairs and averaged their scores.
 
-1. `task1_analysis.ipynb` writes the cleaned data to `data/clean/` (needed by Tasks 2 and 3).
-2. `task2_cf.ipynb` trains, evaluates and saves the CF models, then runs the case studies from the saved files.
-3. `task3_cold_target.ipynb` runs the cold-target experiment on seed 42. Steps 8-10 load the
-   three-split results produced by:
+We did not delete any unusual values. About 70% of DAVIS sits at the screening limit (pKd = 5), and KIBA has a handful of extreme scores, so we flagged them and discussed them instead. Missing KIBA entries were left empty since a pair that was never measured does not necessarily mean that it does not bind.
 
-```powershell
-.\.venv\Scripts\python.exe project2_cold.py     # writes results/cold/ and saved_models/*_cold.npz
-.\.venv\Scripts\python.exe -m unittest discover -s tests
+## Task 2 summary
+We treated ligands as users and targets as items, so the recommender answers "which targets is this ligand likely to bind?". The data was split 70 / 15 / 15 with seed 42, making sure every ligand and target in the validation and test sets also appears in training.
+
+The main model is the neighbourhood CF from lecture 11.3. It starts from the baseline (mu + b_u + b_i) and adjusts it using similar targets or ligands measured with centred cosine similarity. We compared it against a global mean, a ligand mean and the baseline itself using MSE, Concordance Index, Hit@1 and Hit@5. Validation picked item-based CF with k = 10 for DAVIS and user-based CF with k = 10 for KIBA, and the test set was only used once at the end. Both models are saved in `saved_models/`.
+
+## Task 3 summary
+CF However has a blind spot. If a target has no training scores, it can only fall back to the ligand's average (mu + b_u), so every new target gets the same prediction. To test this properly, we split by target instead of by pair (70 / 15 / 15, seed 42), so validation and test targets have no scores in training at all.
+
+Our fix borrows scores from the training targets whose protein sequences look most similar. Each sequence is broken into overlapping 3-letter fragments, and two targets are compared by how many fragments they share (Jaccard similarity). This requires no binding data so it works for any new target. The prediction itself uses the same neighbour formula as Task 2, with sequence similarity in place of score similarity. We picked k on the validation targets, where k = 5 for DAVIS and k = 3 for KIBA.
+
+Compared with the CF fallback on the cold test targets:
+- DAVIS: MSE dropped from 0.460 to 0.293, and Hit@1 rose from 0.02 to 0.48
+- KIBA: MSE dropped from 0.394 to 0.365, and Hit@1 rose from 0.14 to 0.35
+
+The method works well only when a new target has a similar protein in the training set. If no similar protein exists, its predictions are no better than the fallback.
+
+**Extension: similarity-dependent shrinkage.** Because weak neighbours can make predictions worse, we blend the neighbour estimate with the ligand's average, trusting the neighbours more when the closest protein *measured for that ligand* is more similar:
+
+```text
+prediction = ligand_mean + weight * (neighbour_estimate - ligand_mean)
+weight     = clip((s - low) / (high - low), 0, 1)
 ```
 
-## Files
+`low`, `high` and k are chosen on validation targets. A constant-weight blend is also tested to check that the similarity is what helps. Since this idea came from looking at the seed-42 results, we repeated the experiment on three splits (seeds 42, 7, 2026):
 
-| File/folder | Purpose |
-|---|---|
-| `task1_analysis.ipynb` | Loading, cleaning, deduplication, heatmaps, KDEs, selectivity and target-similarity analysis |
-| `task2_cf.ipynb` | Pair split, item/user CF, baselines, metrics, saved models and six case studies |
-| `task3_cold_target.ipynb` | Cold-target split, sequence-neighbour prediction, similarity-dependent shrinkage, new-sequence demo |
-| `project2_data.py` | Shared loading, validation and deduplication used by Task 1 |
-| `project2_metrics.py` | MSE, pooled and per-ligand CI, tie-aware expected Hit@1/5 and rank of the best target, paired bootstrap |
-| `project2_cf.py` | CF model, split, validation selection, checkpoint save/load |
-| `project2_cold.py` | Cold-target models, validation selection, 3-split experiment, checkpoint and `predict_new_target` |
-| `data/davis/`, `data/kiba/` | Supplied DeepDTA benchmark files |
-| `data/clean/` | Generated by Task 1 (the repository's `.gitignore` excludes `data/`; include it in a submission package) |
-| `saved_models/` | `davis_cf.npz`, `kiba_cf.npz` (Task 2) and `davis_cold.npz`, `kiba_cold.npz` (Task 3, seed 42) |
-| `results/cold/` | Task 3 splits, validation searches, predictions, metrics, intervals and reload checks |
-| `tests/` | Metric, CF, cold-target and cleaning checks |
-
-## Evaluation notes
-
-- DAVIS uses pKd = 9 - log10(Kd in nM); KIBA keeps its supplied scale. Missing scores remain unknown.
-  Valid zero/extreme scores are kept and flagged.
-- Hit@1/5 and the rank of the first truly best target are **expectations over random ordering within
-  tied predictions**. Ranking by row order would otherwise give constant-prediction baselines an
-  arbitrary advantage. All targets tied for the highest true score count as correct.
-- **Pooled CI** compares all pairs, including pairs from different ligands, so a ligand-mean model scores
-  about 0.75 without ranking anything within a ligand. **Macro CI** averages CI within each ligand and is
-  0.5 for such a model. Both are reported.
-- CF similarity: centred profiles whose norm is within floating-point roundoff of zero get zero
-  similarity, otherwise constant KIBA profiles produce spurious large cosine similarities.
-- All hyperparameters are chosen on validation data only.
-
-## Task 3 result
-
-The original sequence-neighbour method borrows scores from training proteins with similar 3-mer
-content. The extension blends that estimate with the ligand's training mean, trusting the neighbours
-in proportion to how similar the closest protein *measured for that ligand* is. A constant-weight
-blend is evaluated as an ablation.
-
-| Dataset | Original MSE, seed 42 | Extension MSE, seed 42 | Mean MSE over seeds 42/7/2026: original -> extension |
+| Dataset | Original MSE, seed 42 | Extension MSE, seed 42 | Mean MSE over 3 splits: original -> extension |
 |---|---:|---:|---:|
 | DAVIS | 0.2926 | 0.2687 | 0.3024 -> 0.2628 |
 | KIBA | 0.3647 | 0.3028 | 0.3388 -> 0.3016 |
 
-MSE improves on all six dataset/split combinations; five of six paired target-bootstrap intervals
-exclude zero (KIBA seed 7 does not). Ranking does not consistently improve. The extension was
-motivated by the seed-42 test analysis, so the extra splits are robustness checks rather than
-independent confirmation.
+MSE improves on all six dataset/split combinations, and five of six paired bootstrap intervals exclude zero (KIBA seed 7 does not). Ranking does not consistently improve.
 
-Predict for a protein sequence that has no training measurements:
+The saved model can predict for a protein sequence that has no training measurements:
 
 ```python
 from project2_cold import predict_new_target
 predictions = predict_new_target("saved_models/davis_cold.npz", protein_sequence, ["11338033"])
 ```
 
-The ligand must have training measurements; predicting for a new drug is a different task.
+## Evaluation notes
+- Hit@1/5 and the rank of the true best target are averaged over all orderings of tied predictions, so results do not depend on row order. Every target tied for the highest true score counts as correct.
+- Pooled CI compares all pairs, including pairs from different ligands, so a ligand-mean model scores about 0.75 without ranking anything within a ligand. We also report macro CI (CI within each ligand, averaged), which is 0.5 for such a model.
+- In CF, ligand or target profiles that are constant up to rounding error get zero similarity, otherwise rounding noise creates large false similarities in KIBA.
+
+## Notes
+- `data/kiba/kiba_drug_sim.zip` must be unzipped locally if needed (the file is too large to be uploaded on its own).
+- `saved_models/kiba_cf.npz` is about 25 MB, at the GitHub website's 25 MB upload limit. Commit and sync it from VS Code instead of uploading it on the website.
+- Random seed 42 is used throughout so that the results are reproducible. Task 3 additionally reports seeds 7 and 2026.
