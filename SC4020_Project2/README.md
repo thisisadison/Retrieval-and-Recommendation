@@ -1,7 +1,7 @@
 # SC4020 Project 2: DAVIS and KIBA Drug–Target Binding
 
 ## Folder structure
-- `data/davis/`, `data/kiba/`: original datasets from DeepDTA provided in the slides
+- `data/davis/`, `data/kiba/`: original datasets from DeepDTA provided
 - `data/clean/`: cleaned, deduplicated data created by Task 1 (used by Tasks 2 and 3)
 - `figures/`: figures saved by the notebooks for the report
 - `saved_models/`: trained CF models from Task 2 (`davis_cf.npz`, `kiba_cf.npz`)
@@ -16,32 +16,28 @@
 4. Run `task3_cold_target.ipynb` (Run All). It saves its figures to `figures/`.
 
 ## Requirements
-Running the first cell of `task1_analysis.ipynb` installs all required libraries (pandas, numpy, matplotlib, seaborn, scipy). Run Task 1 first.
+Running the first cell of `task1_analysis.ipynb` installs all required libraries (pandas, numpy, matplotlib, seaborn, scipy) if it has not been installed. Run Task 1 first.
 
 ## Task 1 summary
-- DAVIS scores converted to pKd = 9 − log10(Kd). KIBA scores are used as supplied (higher = stronger for both).
-- Pairs with identical SMILES and sequence merged by averaging their scores.
-- Screening-limit (DAVIS pKd = 5) and extreme KIBA values are flagged instead of being removed.
-- Missing KIBA entries are not treated as zero (missing does not mean no binding).
+We started by making sure both datasets are in the same shape. DAVIS gives binding as Kd in nM, where lower means stronger. Hence we converted it to pKd = 9 − log10(Kd) to make higher mean stronger, matching KIBA's scale. Some IDs turned out to share the exact same SMILES or protein sequence, so we merged those pairs and averaged their scores.
+
+We did not delete any unusual values. About 70% of DAVIS sits at the screening limit (pKd = 5), and KIBA has a handful of extreme scores, so we flagged them and discussed them instead. Missing KIBA entries were left empty since a pair that was never measured does not necessarily mean that it does not bind.
 
 ## Task 2 summary
-- Ligands = users, targets = items.
-- Split: 70 / 15 / 15 with seed 42, where every validation/test ligand and target also appears in training.
-- Models: global mean, ligand mean, baseline (mu + b_u + b_i) and neighbourhood CF on top of the baseline with centred cosine similarity used in lecture 11.3.
-- Hyperparameters (item- vs user-based, k) chosen on validation. The test set is evaluated once.
-- Metrics: MSE, Concordance Index, Hit@1 and Hit@5.
-- Final models: DAVIS item-based k = 10 and KIBA user-based k = 10. Reloading the saved models reproduces identical predictions.
+We treated ligands as users and targets as items, so the recommender answers "which targets is this ligand likely to bind?". The data was split 70 / 15 / 15 with seed 42, making sure every ligand and target in the validation and test sets also appears in training.
+
+The main model is the neighbourhood CF from lecture 11.3. It starts from the baseline (mu + b_u + b_i) and adjusts it using similar targets or ligands measured with centred cosine similarity. We compared it against a global mean, a ligand mean and the baseline itself using MSE, Concordance Index, Hit@1 and Hit@5. Validation picked item-based CF with k = 10 for DAVIS and user-based CF with k = 10 for KIBA, and the test set was only used once at the end. Both models are saved in `saved_models/`.
 
 ## Task 3 summary
-- Problem: CF cannot predict for a target with no training scores. It falls back to the ligand mean (mu + b_u), giving every new target the same score.
-- Cold-target split: targets (not pairs) split 70 / 15 / 15 with seed 42. Validation and test targets have no training scores.
-- Method: borrow scores from the training targets with the most similar protein sequences using the lecture 11.3 neighbour formula with sequence similarity instead of score similarity.
-- Sequence similarity: Jaccard similarity on sets of 3-letter fragments (3-mers) of each sequence. It uses no binding scores so it works for any new target.
-- k chosen on cold validation targets (DAVIS k = 5, KIBA k = 3).
-- Results vs. the CF fallback on cold test targets:
-  - DAVIS: MSE 0.460 -> 0.293, Hit@1 0.02 -> 0.48
-  - KIBA: MSE 0.394 -> 0.365, Hit@1 0.13 -> 0.35
-- Limitation: the gain depends on having a similar training target. Targets with no close relative see little to no improvement.
+CF However has a blind spot. If a target has no training scores, it can only fall back to the ligand's average (mu + b_u), so every new target gets the same prediction. To test this properly, we split by target instead of by pair (70 / 15 / 15, seed 42), so validation and test targets have no scores in training at all.
+
+Our fix borrows scores from the training targets whose protein sequences look most similar. Each sequence is broken into overlapping 3-letter fragments, and two targets are compared by how many fragments they share (Jaccard similarity). This requires no binding data so it works for any new target. The prediction itself uses the same neighbour formula as Task 2, with sequence similarity in place of score similarity. We picked k on the validation targets, where k = 5 for DAVIS and k = 3 for KIBA.
+
+Compared with the CF fallback on the cold test targets:
+- DAVIS: MSE dropped from 0.460 to 0.293, and Hit@1 rose from 0.02 to 0.48
+- KIBA: MSE dropped from 0.394 to 0.365, and Hit@1 rose from 0.13 to 0.35
+
+The method works well only when a new target has a similar protein in the training set. If no similar protein exists, its predictions are no better than the fallback.
 
 ## Notes
 - `data/kiba/kiba_drug_sim.zip` must be unzipped locally if needed (the file is too large to be uploaded on its own).
