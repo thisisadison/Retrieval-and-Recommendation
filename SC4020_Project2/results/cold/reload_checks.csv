@@ -1,0 +1,3 @@
+dataset,seed,checkpoint,reload_max_absolute_error,new_sequence_max_absolute_error
+davis,42,saved_models\davis_cold.npz,0.0,0.0
+kiba,42,saved_models\kiba_cold.npz,0.0,0.0

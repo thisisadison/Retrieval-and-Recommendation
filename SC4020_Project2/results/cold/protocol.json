@@ -1,0 +1,91 @@
+{
+  "seeds": [
+    42,
+    7,
+    2026
+  ],
+  "k_grid": [
+    1,
+    2,
+    3,
+    5,
+    10,
+    20,
+    40
+  ],
+  "global_weights": [
+    0.0,
+    0.25,
+    0.5,
+    0.75,
+    1.0
+  ],
+  "similarity_ramps": [
+    [
+      0.0,
+      0.3
+    ],
+    [
+      0.0,
+      0.5
+    ],
+    [
+      0.0,
+      0.75
+    ],
+    [
+      0.0,
+      1.0
+    ],
+    [
+      0.1,
+      0.3
+    ],
+    [
+      0.1,
+      0.5
+    ],
+    [
+      0.1,
+      0.75
+    ],
+    [
+      0.1,
+      1.0
+    ],
+    [
+      0.2,
+      0.3
+    ],
+    [
+      0.2,
+      0.5
+    ],
+    [
+      0.2,
+      0.75
+    ],
+    [
+      0.2,
+      1.0
+    ],
+    [
+      0.3,
+      0.5
+    ],
+    [
+      0.3,
+      0.75
+    ],
+    [
+      0.3,
+      1.0
+    ]
+  ],
+  "selection_metric": "validation MSE",
+  "similarity_confidence": "max similarity among this ligand's observed training targets",
+  "cold_split_unit": "target (targets deduplicated by sequence in Task 1)",
+  "bootstrap_replicates": 1000,
+  "interpretation": "Exploratory extension motivated by prior test analysis; repeated splits are robustness checks.",
+  "data_dir": "data\\clean"
+}
